@@ -27,3 +27,5 @@ function App() {
 // faremos a verificação dentro da própria CardManagementPage, como no Dashboard.
 
 export default App;
+
+// Forçando o redeploy
