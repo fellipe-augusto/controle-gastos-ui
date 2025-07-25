@@ -1,7 +1,6 @@
 import React from 'react';
-import './ExpenseTable.css'; // Estilos para a tabela
+import './ExpenseTable.css';
 
-// Funções auxiliares para formatação
 const formatDate = (dateString) => {
   return new Date(dateString).toLocaleDateString('pt-BR', { timeZone: 'UTC' });
 };
@@ -12,6 +11,7 @@ const formatCurrency = (value) => {
 
 export function ExpenseTable({ expenses, userRole, onEdit, onDelete }) {
   const isAdmin = userRole === 'ADMIN';
+
   if (expenses.length === 0) {
     return <p className="no-expenses-message">Nenhuma despesa registrada ainda. Que tal adicionar uma?</p>
   }
@@ -40,13 +40,13 @@ export function ExpenseTable({ expenses, userRole, onEdit, onDelete }) {
               <td className="cell-center">{`${expense.card.name} / ${expense.card.bank}`}</td>
               <td className="cell-center">{expense.responsible}</td>
               {isAdmin && (
-                <td className="cell-center"> 
+                <td className="cell-center">
                   <div className="actions-cell">
                     <button onClick={() => onEdit(expense)} className="action-button edit-button">Editar</button>
                     <button onClick={() => onDelete(expense)} className="action-button delete-button">Excluir</button>
-                </div>
-              </td>
-            )}
+                  </div>
+                </td>
+              )}
             </tr>
           ))}
         </tbody>

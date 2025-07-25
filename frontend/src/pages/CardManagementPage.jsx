@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../services/api';
-import './CardManagementPage.css'; // Criaremos este estilo
+import './CardManagementPage.css';
 
 export default function CardManagementPage() {
   const [cards, setCards] = useState([]);
@@ -9,7 +9,6 @@ export default function CardManagementPage() {
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
-  // Estados para o formulário de adicionar cartão
   const [name, setName] = useState('');
   const [bank, setBank] = useState('');
   const [formLoading, setFormLoading] = useState(false);
@@ -25,9 +24,8 @@ export default function CardManagementPage() {
       api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       
       const userResponse = await api.get('/auth/me');
-      // Verificação de segurança
       if (userResponse.data.role !== 'ADMIN') {
-        navigate('/'); // Se não for admin, volta para o dashboard
+        navigate('/');
         return;
       }
       setCurrentUser(userResponse.data);
@@ -37,7 +35,7 @@ export default function CardManagementPage() {
 
     } catch (error) {
       console.error("Erro ao carregar dados", error);
-      navigate('/'); // Em caso de qualquer erro, volta para o dashboard
+      navigate('/');
     } finally {
       setIsLoading(false);
     }
@@ -54,7 +52,7 @@ export default function CardManagementPage() {
       await api.post('/cards', { name, bank });
       setName('');
       setBank('');
-      fetchInitialData(); // Re-busca os dados para atualizar a lista
+      await fetchInitialData();
     } catch (error) {
       console.error("Erro ao adicionar cartão", error);
       alert('Não foi possível adicionar o cartão.');
@@ -67,15 +65,15 @@ export default function CardManagementPage() {
     if (window.confirm('Tem certeza que deseja excluir este cartão?')) {
       try {
         await api.delete(`/cards/${cardId}`);
-        fetchInitialData(); // Atualiza a lista
+        await fetchInitialData();
       } catch (error) {
         alert('Não foi possível excluir o cartão.');
       }
     }
   };
 
-  if (isLoading) {
-    return <div className="page-loading">Carregando gerenciador de cartões...</div>;
+  if (isLoading || !currentUser) {
+    return <div className="page-loading">Carregando...</div>;
   }
   
   return (

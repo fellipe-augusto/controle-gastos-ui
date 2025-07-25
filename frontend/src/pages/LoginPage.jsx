@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
-import './LoginPage.css'; // Vamos criar este arquivo para o estilo
+import './LoginPage.css';
 
 export default function LoginPage() {
   const [isLoginMode, setIsLoginMode] = useState(true);
@@ -22,9 +22,7 @@ export default function LoginPage() {
 
     try {
       const response = await api.post(endpoint, payload);
-      // Salva o token no armazenamento local do navegador
       localStorage.setItem('token', response.data.token);
-      // Redireciona o usuário para a página principal
       navigate('/');
     } catch (err) {
       const errorMessage = err.response?.data?.error || 'Ocorreu um erro. Tente novamente.';
@@ -37,6 +35,7 @@ export default function LoginPage() {
   const toggleMode = () => {
     setIsLoginMode(!isLoginMode);
     setError('');
+    setName('');
     setEmail('');
     setPassword('');
   };
@@ -49,17 +48,17 @@ export default function LoginPage() {
         
         <form onSubmit={handleSubmit}>
           {!isLoginMode && (
-          <div className="input-group">
+            <div className="input-group">
               <label htmlFor="name">Nome</label>
               <input
-              type="text"
-              id="name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-              placeholder="Seu nome"
+                type="text"
+                id="name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+                placeholder="Seu nome"
               />
-          </div>
+            </div>
           )}
           <div className="input-group">
             <label htmlFor="email">Email</label>

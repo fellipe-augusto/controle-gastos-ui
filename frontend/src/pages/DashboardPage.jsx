@@ -30,11 +30,11 @@ export default function DashboardPage() {
   const navigate = useNavigate();
   const isAdmin = currentUser?.role === 'ADMIN';
 
-  const handleLogout = () => {
+  const handleLogout = useCallback(() => {
     localStorage.removeItem('token');
     api.defaults.headers.common['Authorization'] = null;
     navigate('/login');
-  };
+  }, [navigate]);
 
   const handleOpenEditModal = (expense) => {
     setEditingExpense(expense);
@@ -48,6 +48,45 @@ export default function DashboardPage() {
     setEditingExpense(null);
   };
 
+  const fetchData = useCallback(async () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      handleLogout();
+      return;
+    }
+    api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    
+    setIsLoading(true);
+    try {
+      const params = {
+        year: selectedYear,
+        month: selectedMonth,
+      };
+      if (selectedCardId) params.cardId = selectedCardId;
+      if (selectedResponsible) params.responsible = selectedResponsible;
+
+      const [userResponse, expensesResponse, cardsResponse, responsiblesResponse] = await Promise.all([
+        api.get('/auth/me'),
+        api.get('/expenses', { params }),
+        api.get('/cards'),
+        api.get('/expenses/responsibles'),
+      ]);
+
+      setCurrentUser(userResponse.data);
+      setExpenses(expensesResponse.data);
+      setCards(cardsResponse.data);
+      setResponsibles(responsiblesResponse.data);
+
+    } catch (error) {
+      console.error("Erro ao buscar dados:", error);
+      if (error.response?.status === 401) {
+        handleLogout();
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  }, [navigate, selectedYear, selectedMonth, selectedCardId, selectedResponsible, handleLogout]);
+  
   const handleExpenseSubmitted = () => {
     fetchData();
     handleCloseModal();
@@ -69,54 +108,18 @@ export default function DashboardPage() {
     }
   };
 
-  const fetchData = useCallback(async () => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      handleLogout();
-      return;
-    }
-    api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-    
-    setIsLoading(true);
-    try {
-      const params = {
-        year: selectedYear,
-        month: selectedMonth,
-      };
-      if (selectedCardId) params.cardId = selectedCardId;
-      if (selectedResponsible) params.responsible = selectedResponsible;
-
-      // CORREÇÃO: Adicionamos a busca de 'responsibles' aqui
-      const [userResponse, expensesResponse, cardsResponse, responsiblesResponse] = await Promise.all([
-        api.get('/auth/me'),
-        api.get('/expenses', { params }),
-        api.get('/cards'),
-        api.get('/expenses/responsibles'), // <-- Buscando tudo junto
-      ]);
-
-      setCurrentUser(userResponse.data);
-      setExpenses(expensesResponse.data);
-      setCards(cardsResponse.data);
-      setResponsibles(responsiblesResponse.data); // <-- Salvando a lista de responsáveis
-
-    } catch (error) {
-      console.error("Erro ao buscar dados:", error);
-      if (error.response?.status === 401) {
-        handleLogout();
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  }, [navigate, selectedYear, selectedMonth, selectedCardId, selectedResponsible]);
-
   useEffect(() => {
     fetchData();
   }, [fetchData]);
 
+  if (!currentUser) {
+    return <div className="page-loading">Carregando...</div>;
+  }
+
   return (
     <div className="dashboard-container">
       <header className="dashboard-header">
-        <h1>{currentUser ? `Painel de ${currentUser.name}` : 'Meu Painel Financeiro'}</h1>
+        <h1>{`Painel de ${currentUser.name}`}</h1>
         <div className="header-actions">
           {isAdmin && (
             <Link to="/cards" className="header-link">Gerenciar Cartões</Link>
@@ -167,7 +170,7 @@ export default function DashboardPage() {
         </div>
       </div>
       
-      <div className={`dashboard-main-layout ${isAdmin ? 'admin-view' : ''}`}>
+      <div className="dashboard-main-layout">
         <div className="expenses-section">
           <main className="dashboard-content">
             <div className="actions-bar">

@@ -1,16 +1,34 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import api from '../services/api';
-import './AddExpenseModal.css'; // Estilos para o modal
+import './AddExpenseModal.css';
 
 export function AddExpenseModal({ cards, onClose, onExpenseAdded, isEditMode, expenseToEdit }) {
-  const [description, setDescription] = useState(isEditMode ? expenseToEdit.description : '');
-  const [amount, setAmount] = useState(isEditMode ? expenseToEdit.amount : '');
-  const [date, setDate] = useState(isEditMode ? new Date(expenseToEdit.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]);
-  const [totalInstallments, setTotalInstallments] = useState(isEditMode ? expenseToEdit.totalInstallments : 1);
-  const [responsible, setResponsible] = useState(isEditMode ? expenseToEdit.responsible : '');
-  const [cardId, setCardId] = useState(isEditMode ? expenseToEdit.cardId : (cards.length > 0 ? cards[0].id : ''));
+  const [description, setDescription] = useState('');
+  const [amount, setAmount] = useState('');
+  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [totalInstallments, setTotalInstallments] = useState(1);
+  const [responsible, setResponsible] = useState('');
+  const [cardId, setCardId] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (isEditMode && expenseToEdit) {
+      setDescription(expenseToEdit.description);
+      setAmount(expenseToEdit.amount);
+      setDate(new Date(expenseToEdit.date).toISOString().split('T')[0]);
+      setTotalInstallments(expenseToEdit.totalInstallments);
+      setResponsible(expenseToEdit.responsible);
+      setCardId(expenseToEdit.cardId);
+    } else {
+      setDescription('');
+      setAmount('');
+      setDate(new Date().toISOString().split('T')[0]);
+      setTotalInstallments(1);
+      setResponsible('');
+      setCardId(cards.length > 0 ? cards[0].id : '');
+    }
+  }, [isEditMode, expenseToEdit, cards]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -50,7 +68,7 @@ export function AddExpenseModal({ cards, onClose, onExpenseAdded, isEditMode, ex
           
           <div className="form-row">
             <div className="input-group">
-              <label>Valor Total (R$)</label>
+              <label>Valor {isEditMode ? 'da Parcela' : 'Total'} (R$)</label>
               <input type="number" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} required />
             </div>
             <div className="input-group">
@@ -85,7 +103,7 @@ export function AddExpenseModal({ cards, onClose, onExpenseAdded, isEditMode, ex
           <div className="modal-actions">
             <button type="button" className="cancel-button" onClick={onClose}>Cancelar</button>
             <button type="submit" className="submit-button" disabled={loading}>
-              {loading ? 'Salvando...' : 'Salvar Despesa'}
+              {loading ? 'Salvando...' : (isEditMode ? 'Salvar Alterações' : 'Adicionar Despesa')}
             </button>
           </div>
         </form>
