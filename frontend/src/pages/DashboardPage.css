@@ -180,3 +180,12 @@
   text-decoration: none;
   font-weight: bold;
 }
+
+.summary-section {
+  margin-bottom: 30px;
+}
+.charts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 20px;
+}

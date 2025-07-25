@@ -1,0 +1,25 @@
+.summary-cards-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+  margin-bottom: 30px;
+}
+.summary-card {
+  background: white;
+  padding: 25px;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.card-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #6c757d;
+}
+.card-value {
+  font-size: 28px;
+  font-weight: 700;
+  color: #212529;
+}

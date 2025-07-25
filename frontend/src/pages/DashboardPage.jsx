@@ -4,6 +4,8 @@ import api from '../services/api';
 
 import { ExpenseTable } from '../components/ExpenseTable';
 import { AddExpenseModal } from '../components/AddExpenseModal';
+import { SummaryCards } from '../components/SummaryCards';
+import { SpendingChart } from '../components/SpendingChart';
 import './DashboardPage.css';
 
 const months = [
@@ -18,6 +20,7 @@ export default function DashboardPage() {
   const [expenses, setExpenses] = useState([]);
   const [cards, setCards] = useState([]);
   const [currentUser, setCurrentUser] = useState(null);
+  const [users, setUsers] = useState([]);
   const [responsibles, setResponsibles] = useState([]);
   const [selectedCardId, setSelectedCardId] = useState('');
   const [selectedResponsible, setSelectedResponsible] = useState('');
@@ -26,6 +29,7 @@ export default function DashboardPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [editingExpense, setEditingExpense] = useState(null);
+  const [summaryData, setSummaryData] = useState(null);
   
   const navigate = useNavigate();
   const isAdmin = currentUser?.role === 'ADMIN';
@@ -58,6 +62,10 @@ export default function DashboardPage() {
     
     setIsLoading(true);
     try {
+      const userResponse = await api.get('/auth/me');
+      const user = userResponse.data;
+      setCurrentUser(user);
+      
       const params = {
         year: selectedYear,
         month: selectedMonth,
@@ -65,17 +73,27 @@ export default function DashboardPage() {
       if (selectedCardId) params.cardId = selectedCardId;
       if (selectedResponsible) params.responsible = selectedResponsible;
 
-      const [userResponse, expensesResponse, cardsResponse, responsiblesResponse] = await Promise.all([
-        api.get('/auth/me'),
+      const apiCalls = [
         api.get('/expenses', { params }),
         api.get('/cards'),
         api.get('/expenses/responsibles'),
-      ]);
+        api.get('/expenses/summary', { params }),
+      ];
 
-      setCurrentUser(userResponse.data);
-      setExpenses(expensesResponse.data);
-      setCards(cardsResponse.data);
-      setResponsibles(responsiblesResponse.data);
+      if (user.role === 'ADMIN') {
+        apiCalls.push(api.get('/users'));
+      }
+
+      const responses = await Promise.all(apiCalls);
+      
+      setExpenses(responses[0].data);
+      setCards(responses[1].data);
+      setResponsibles(responses[2].data);
+      setSummaryData(responses[3].data);
+
+      if (user.role === 'ADMIN' && responses[4]) {
+        setUsers(responses[4].data);
+      }
 
     } catch (error) {
       console.error("Erro ao buscar dados:", error);
@@ -121,9 +139,7 @@ export default function DashboardPage() {
       <header className="dashboard-header">
         <h1>{`Painel de ${currentUser.name}`}</h1>
         <div className="header-actions">
-          {isAdmin && (
-            <Link to="/cards" className="header-link">Gerenciar Cartões</Link>
-          )}
+          {isAdmin && (<Link to="/cards" className="header-link">Gerenciar Cartões</Link>)}
           <button onClick={handleLogout} className="logout-button">Sair</button>
         </div>
       </header>
@@ -170,6 +186,28 @@ export default function DashboardPage() {
         </div>
       </div>
       
+      {summaryData && (
+        <div className="summary-section">
+          <SummaryCards data={summaryData} />
+          <div className="charts-grid">
+            {isAdmin && summaryData.spendingByResponsible.length > 0 && (
+              <SpendingChart
+                title="Gastos por Responsável"
+                data={summaryData.spendingByResponsible}
+                dataLabelField="responsible"
+              />
+            )}
+            {summaryData.spendingByCard.length > 0 && (
+              <SpendingChart
+                title="Gastos por Cartão"
+                data={summaryData.spendingByCard}
+                dataLabelField="cardName"
+              />
+            )}
+          </div>
+        </div>
+      )}
+      
       <div className="dashboard-main-layout">
         <div className="expenses-section">
           <main className="dashboard-content">
@@ -197,6 +235,7 @@ export default function DashboardPage() {
 
       {isModalOpen && isAdmin && (
         <AddExpenseModal
+          users={users}
           cards={cards}
           onClose={handleCloseModal}
           onExpenseAdded={handleExpenseSubmitted}

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import api from '../services/api';
 import './AddExpenseModal.css';
 
-export function AddExpenseModal({ cards, onClose, onExpenseAdded, isEditMode, expenseToEdit }) {
+export function AddExpenseModal({ users, cards, onClose, onExpenseAdded, isEditMode, expenseToEdit }) {
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState('');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
@@ -20,6 +20,9 @@ export function AddExpenseModal({ cards, onClose, onExpenseAdded, isEditMode, ex
       setTotalInstallments(expenseToEdit.totalInstallments);
       setResponsible(expenseToEdit.responsible);
       setCardId(expenseToEdit.cardId);
+    } else if (users.length > 0) {
+      // Se não estiver editando, sugere o primeiro usuário da lista
+      setResponsible(users[0].name);
     } else {
       setDescription('');
       setAmount('');
@@ -28,7 +31,7 @@ export function AddExpenseModal({ cards, onClose, onExpenseAdded, isEditMode, ex
       setResponsible('');
       setCardId(cards.length > 0 ? cards[0].id : '');
     }
-  }, [isEditMode, expenseToEdit, cards]);
+  }, [isEditMode, expenseToEdit, cards, users]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -95,7 +98,12 @@ export function AddExpenseModal({ cards, onClose, onExpenseAdded, isEditMode, ex
 
           <div className="input-group">
             <label>Responsável pela Compra</label>
-            <input type="text" value={responsible} onChange={(e) => setResponsible(e.target.value)} required placeholder="Ex: João, Maria, Empresa..." />
+            <select value={responsible} onChange={(e) => setResponsible(e.target.value)} required>
+              <option value="" disabled>Selecione um responsável</option>
+              {users.map(user => (
+                <option key={user.id} value={user.name}>{user.name}</option>
+              ))}
+            </select>
           </div>
           
           {error && <p className="error-message">{error}</p>}
